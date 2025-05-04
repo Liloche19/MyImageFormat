@@ -10,6 +10,38 @@ HEADER_SIZE = 9
 PIXEL_FORMAT = "RGBA"
 END_OF_FILE = "EOF"
 
+class PILImage():
+
+    def __init__(self):
+        self.height: int = 0
+        self.width: int = 0
+        return
+
+    def load(self, filename: str):
+        self.image = Image.open(filename).convert(PIXEL_FORMAT)
+        self.width, self.hight = self.image.size
+        return
+
+    def convert_to_my_image(self):
+        new: MyImage = MyImage()
+        new.array = [[] for i in range(self.height)]
+        for i in range(self.height):
+            for j in range(self.width):
+                pixel = self.image.getpixel((j, i))
+                new.array[i].append(pixel)
+        return new
+
+    def display(self) -> None:
+        if not self.image:
+            print("Image not loaded !")
+            return
+        self.image.show()
+        return
+
+    def save(self, filename: str) -> None:
+        self.image.save(filename)
+        return
+
 class MyImage():
     def __init__(self):
         self.input_name: str = ""
@@ -24,17 +56,7 @@ class MyImage():
             self.bpp: int = 4
         return
 
-    def load(self, filename: str):
-        if self.input_name != "":
-            print("Image already loaded !")
-            return
-        self.input_name = filename
-        self.image_file = Image.open(self.input_name)
-        self.image = self.image_file.convert(PIXEL_FORMAT)
-        self.width, self.height = self.image.size
-        return
-
-    def my_load(self, filename):
+    def load(self, filename):
         self.input_name = filename
         with open(self.input_name, "rb") as file:
             data = file.read()
@@ -78,30 +100,7 @@ class MyImage():
                 self.array[i].append((red, green, blue, alpha))
         return
 
-    def create_array(self):
-        if self.image == None:
-            print("Image not loaded !")
-            return None
-        self.array = [[] for i in range(self.height)]
-        for i in range(self.height):
-            for j in range(self.width):
-                pixel = self.image.getpixel((j, i))
-                self.array[i].append(pixel)
-        return self.array
-
-    def display(self):
-        if self.array == [[]]:
-            print("The image is not loaded !")
-            return
-        print_image = Image.new(PIXEL_FORMAT, (self.width, self.height))
-        for y in range(self.height):
-            for x in range(self.width):
-                pixel = self.array[y][x]
-                print_image.putpixel((x, y), pixel)
-        print_image.show()
-        return
-
-    def my_save(self, output_name: str):
+    def save(self, output_name: str):
         self.output_name = output_name
         with open(self.output_name, "wb") as file:
             file.write(MAGIC.encode("ascii"))
@@ -120,30 +119,23 @@ class MyImage():
             file.write(END_OF_FILE.encode("ascii"))
         return
 
-    def save(self, output_name: str):
-        self.output_name = output_name
-        save = Image.new(PIXEL_FORMAT, (self.width, self.height))
+    def convert_to_pil_image(self) -> PILImage:
+        new = PILImage()
+        new.image = Image.new(PIXEL_FORMAT, (self.width, self.height))
         for y in range(self.height):
             for x in range(self.width):
                 pixel = self.array[y][x]
-                save.putpixel((x, y), pixel)
-        save.save(self.output_name)
+                new.image.putpixel((x, y), pixel)
+        new.height = self.height
+        new.width = self.width
+        return new
+
+    def display(self) -> None:
+        pil: PILImage = self.convert_to_pil_image()
+        pil.image.show()
         return
 
-
 def main() -> int:
-    argv = sys.argv
-    argc = len(argv)
-    if argc != 3:
-        print("Invalid number of arguments !")
-        sys.exit(84)
-    array = MyImage()
-    array.my_load(argv[1])
-    array.display()
-    return 0
-    array.create_array()
-    array.my_save(argv[2])
-    print(f"file successfully saved as {array.output_name}")
     return 0
 
 if __name__ == "__main__":
